@@ -21,6 +21,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap myMap;
     private Button move;
+    private Button alarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this,MenuActivity.class);
+                startActivity(intent);
+            }
+        });
+        alarm = findViewById(R.id.btn_alarm);
+        alarm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,AlarmActivity.class);
                 startActivity(intent);
             }
         });

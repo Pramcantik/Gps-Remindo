@@ -13,6 +13,9 @@
         android:theme="@style/Theme.Deneme"
         tools:targetApi="31">
         <activity
+            android:name=".AlarmActivity"
+            android:exported="false" />
+        <activity
             android:name=".IletisimActivity"
             android:exported="false" />
         <activity
