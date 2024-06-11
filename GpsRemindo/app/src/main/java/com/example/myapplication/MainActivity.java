@@ -3,21 +3,29 @@ package com.example.myapplication;
 import static androidx.core.location.LocationManagerCompat.getCurrentLocation;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
@@ -30,6 +38,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -44,14 +53,13 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
-    private static final String PREFS_NAME = "NotePrefs";
-    private static final String KEY_NOTE_COUNT = "NoteCount";
-    private LinearLayout notesContainer;
-    private List<Note> noteList;
+
     private Marker currentMarker;
+    private Circle currentCircle;
     private GoogleMap myMap;
     private MarkerOptions markerOptions;
     Location currentLocation;
@@ -60,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     FusedLocationProviderClient fusedLocationProviderClient;
     private Button move;
     private Button alarm;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        notesContainer = findViewById(R.id.notesContainer);
+
 
         move = findViewById(R.id.btn_menu);
         move.setOnClickListener(new View.OnClickListener() {
@@ -93,6 +102,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         fusedLocationProviderClient = (FusedLocationProviderClient) LocationServices.getFusedLocationProviderClient(this);
         getLastLocation();
     }
+
+
+
     private void getLastLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},FINE_PERMISSION_CODE);
@@ -106,9 +118,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     currentLocation = location;
 
                     mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
                     assert mapFragment != null;
                     mapFragment.getMapAsync(MainActivity.this);
                 }
+
             }
         });
     }
@@ -122,24 +136,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
+            public void onMapClick(@NonNull LatLng latLng) {
                 // Eğer mevcut bir marker varsa, onu sil
                 if (currentMarker != null) {
                     currentMarker.remove();
+                }
+                // Eğer mevcut bir daire varsa, onu sil
+                if (currentCircle != null) {
+                    currentCircle.remove();
                 }
                 // Yeni marker'ı ekler
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(latLng);
                 markerOptions.title("Buraya tıkladınız!");
                 currentMarker = googleMap.addMarker(markerOptions);
+
+                // Yeni daireyi ekler
                 CircleOptions circleOptions = new CircleOptions();
                 circleOptions.center(latLng);
                 circleOptions.radius(50); // Yarıçapı metre cinsinden belirtin
                 circleOptions.strokeWidth(0f); // Çizgi kalınlığı
                 circleOptions.fillColor(0x550000FF); // Dairenin iç rengi ve saydamlığı
-                googleMap.addCircle(circleOptions);
+                currentCircle = googleMap.addCircle(circleOptions);
             }
         });
+
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
